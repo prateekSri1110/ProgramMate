@@ -1,6 +1,6 @@
-# programmate
+# ProgramMate
 
-This template should help get you started developing with Vue 3 in Vite.
+Authenticated Coding Application based on Vue 3.
 
 ## Recommended IDE Setup
 
