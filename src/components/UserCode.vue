@@ -1,20 +1,22 @@
 <template>
-    <span v-if="!isAuthenticated"></span>
+    <span v-if="!isAuthenticated">You are not authenticated.</span>
 
-    <div class="container-fluid code">
+    <div v-else class="container-fluid code">
         <div class="row">
             <!-- Question Side -->
             <div class="col-6 p-5">
-                <button class="btn btn-light mb-3" @click="getRandom">Get Random Question</button>
+                <button class="btn btn-light mb-3 text-uppercase" @click="getRandom">Get Random Question</button>
 
-                <ul v-if="randomProgram">
-                    <h1> <strong>Q. </strong>{{ randomProgram.title }}</h1>
+                <div v-if="randomProgram">
+                    <h2><strong>Q. </strong>{{ randomProgram.title }}</h2>
                     <p>{{ randomProgram.problem }}</p>
-                    <li v-for="(ex, index) in randomProgram.sample" :key="index">
-                        <strong>Input: </strong>{{ ex.Input }}<br />
-                        <strong>Output: </strong>{{ ex.Output }}
-                    </li>
-                </ul>
+                    <ul>
+                        <li v-for="(ex, index) in randomProgram.sample" :key="index">
+                            <strong>Input:</strong> {{ ex.Input }}<br />
+                            <strong>Output:</strong> {{ ex.Output }}
+                        </li>
+                    </ul>
+                </div>
             </div>
 
             <!-- Code Editor Side -->
@@ -27,12 +29,19 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import '../allCss.css'
+import { ref, onMounted } from 'vue'
+import { onAuthStateChanged } from 'firebase/auth'
+import { auth } from '../firebase'
 import CodeEditor from './codeEditor.vue'
+import '../allCss.css'
 
+const isAuthenticated = ref(false)
 
-const authenticated = false;
+onMounted(() => {
+    onAuthStateChanged(auth, (user) => {
+        isAuthenticated.value = !!user
+    })
+})
 
 const programs = ref([
     {
@@ -47,7 +56,7 @@ const programs = ref([
     {
         id: 2,
         title: 'Find if a character is vowel or consonant',
-        problem: "Given a character, check if it is vowel or consonant.",
+        problem: 'Given a character, check if it is vowel or consonant.',
         sample: [
             { Input: "x = 'c'", Output: 'Consonant' },
             { Input: "x = 'u'", Output: 'Vowel' }
@@ -79,7 +88,6 @@ function getRandom() {
     const index = Math.floor(Math.random() * programs.value.length)
     randomProgram.value = programs.value[index]
 }
-
 </script>
 
 <style scoped>

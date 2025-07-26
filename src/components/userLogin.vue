@@ -18,17 +18,20 @@ const loginWithGoogle = async () => {
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
 
-        await setDoc(doc(db, "users", user.uid), {
-            uid: user.uid,
-            name: user.displayName,
-            email: user.email,
-            photoURL: user.photoURL,
-            createdAt: serverTimestamp()
-        });
-        alert(`Welcome, ${user.displayName}`);
-        router.replace('/usercode');
+        if (user) {
+            await setDoc(doc(db, "users", user.uid), {
+                uid: user.uid,
+                name: user.displayName,
+                email: user.email,
+                photoURL: user.photoURL,
+                createdAt: serverTimestamp()
+            });
+
+            alert(`Welcome, ${user.displayName}`);
+            router.replace('/usercode');
+        }
     } catch (error) {
-        console.error(error);
+        console.error("Google Sign-In Error:", error);
         alert("Login failed: " + error.message);
     }
 };

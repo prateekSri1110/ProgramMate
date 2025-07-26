@@ -14,7 +14,6 @@
 
 <script setup>
 import { ref } from 'vue';
-import '../allCss.css';
 import { useRouter } from 'vue-router';
 import { db } from '../firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
@@ -33,15 +32,18 @@ const login = async () => {
             where('email', '==', email.value),
             where('password', '==', password.value)
         );
+
         const snapshot = await getDocs(q);
 
-        if (snapshot.empty) {
-            alert('❌ Invalid email or password. Only Admins can login here!');
-            return;
-        }
+        if (!snapshot.empty) {
+            const adminDoc = snapshot.docs[0];
+            const adminId = adminDoc.id;
 
-        alert('✅ Login successful');
-        router.push('/admin');
+            // ✅ Fix: Use backticks for template literal
+            router.push(`/admin/${adminId}`);
+        } else {
+            alert('❌ Invalid email or password. Only Admins can login here!');
+        }
     } catch (err) {
         alert(`❌ Error: ${err.message}`);
     } finally {

@@ -1,28 +1,36 @@
 <template>
     <div class="p-2">
         <router-link to="/" class="btn btn-light">@ HOME</router-link>
-        <div class="container">
-            <h2>Admins</h2>
+
+        <div class="container mt-3">
+            <span>ADMIN</span>
+            <br />
+            <h3 class="text-uppercase">{{ currentAdmin.name }}</h3>
+            <h6 class="text-uppercase">{{ currentAdmin.email }}</h6>
+
+            <h2 class="mt-4">Admins</h2>
             <table class="table table-striped table-bordered">
                 <thead>
                     <tr class="text-center">
-                        <th scope="col">#</th>
-                        <th scope="col">Admin Name</th>
-                        <th scope="col">Admin Email</th>
-                        <th scope="col">Remove</th>
+                        <th>#</th>
+                        <th>Admin Name</th>
+                        <th>Admin Email</th>
+                        <th>Remove</th>
                     </tr>
                 </thead>
                 <tbody class="text-center">
                     <tr v-for="(ad, index) in admin" :key="ad.id">
-                        <th scope="row">{{ index + 1 }}</th>
+                        <td>{{ index + 1 }}</td>
                         <td>{{ ad.name }}</td>
                         <td>{{ ad.email }}</td>
-                        <td><b @click="deleteAdmin(ad.id)" style="cursor: pointer; color: red;">X</b></td>
+                        <td>
+                            <b @click="deleteAdmin(ad.id)" style="cursor: pointer; color: red;">X</b>
+                        </td>
                     </tr>
                 </tbody>
             </table>
 
-            <HR />
+            <hr />
 
             <form @submit.prevent="addAdmin" class="row g-2 text-center mt-4">
                 <h4>ADD NEW ADMIN</h4>
@@ -45,19 +53,46 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
 import { db } from '../firebase';
-import { collection, doc, deleteDoc, addDoc, getDocs } from 'firebase/firestore';
+import {
+    collection,
+    doc,
+    deleteDoc,
+    addDoc,
+    getDocs,
+    getDoc,
+} from 'firebase/firestore';
 
+const route = useRoute();
+const adminId = route.params.id;
+
+const currentAdmin = ref({});
 const admin = ref([]);
-const fetchadmin = async () => {
+
+const fetchCurrentAdmin = async () => {
+    try {
+        const docRef = doc(db, 'admins', adminId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            currentAdmin.value = docSnap.data();
+        } else {
+            console.warn('⚠️ No such admin found');
+        }
+    } catch (e) {
+        console.error('❌ Error fetching current admin:', e);
+    }
+};
+
+const fetchAdminList = async () => {
     try {
         const querySnapshot = await getDocs(collection(db, 'admins'));
         admin.value = querySnapshot.docs.map(doc => ({
             id: doc.id,
-            ...doc.data()
+            ...doc.data(),
         }));
     } catch (e) {
-        console.error('Error Fetching Admins:', e);
+        console.error('❌ Error fetching admin list:', e);
     }
 };
 
@@ -66,45 +101,51 @@ const newAdmin = ref({
     email: '',
     password: '',
 });
-const addAdmin = async () => {
-    const name = newAdmin.value.name.trim();
-    const email = newAdmin.value.email.trim();
-    const password = newAdmin.value.password.trim();
 
-    if (!name || !email || !password) {
-        alert('Please fill all fields');
+const addAdmin = async () => {
+    const { name, email, password } = newAdmin.value;
+
+    if (!name.trim() || !email.trim() || !password.trim()) {
+        alert('❗ Please fill all fields');
         return;
     }
 
     try {
         await addDoc(collection(db, 'admins'), {
-            name,
-            email,
-            password
+            name: name.trim(),
+            email: email.trim(),
+            password: password.trim(), // ⚠️ Insecure – Consider hashing or Firebase Auth
         });
-
         newAdmin.value = { name: '', email: '', password: '' };
-        await fetchadmin();
+        await fetchAdminList();
     } catch (e) {
-        console.error('Error Adding Admin:', e);
+        console.error('❌ Error adding admin:', e);
     }
 };
 
-const deleteAdmin = async (adminId) => {
-    if (!confirm('Delete this Admin?')) return;
+const deleteAdmin = async (id) => {
+    if (!confirm('🗑️ Are you sure you want to delete this admin?')) return;
 
     try {
-        await deleteDoc(doc(db, 'admins', adminId));
-        console.log('Admin deleted : ', adminId);
-        await fetchadmin();
+        await deleteDoc(doc(db, 'admins', id));
+        console.log('✅ Admin deleted:', id);
+        await fetchAdminList();
     } catch (e) {
-        console.error('Error Deleting Admin:', e);
+        console.error('❌ Error deleting admin:', e);
     }
-}
-onMounted(fetchadmin);
+};
+
+onMounted(() => {
+    fetchCurrentAdmin();
+    fetchAdminList();
+});
 </script>
 
-<style>
+<style scoped>
+span {
+    color: rgb(175, 175, 175);
+}
+
 h4 {
     letter-spacing: 5px;
 }

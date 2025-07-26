@@ -11,7 +11,7 @@ const routes = [
     component: UserCode,
     meta: { requiresAuth: true },
   },
-  { path: "/admin", component: Admin },
+  { path: "/admin/:id", name: "admin", component: Admin },
 ];
 
 const router = createRouter({
