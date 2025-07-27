@@ -14,7 +14,7 @@
 
 <script setup>
 import { ref, onMounted, defineEmits } from 'vue'
-import CodeMirror from 'codemirror'
+import CodeMirror from 'codemirror'     //code Mirror integratio for code pallete
 import 'codemirror/lib/codemirror.css'
 import 'codemirror/mode/python/python.js'
 
@@ -42,7 +42,7 @@ onMounted(async () => {
 
         editorInstance.value = CodeMirror(editorRef.value, {
             value: `print("Hello from Python!")`,
-            mode: 'python',
+            mode: 'python', // language mode set to 'python'
             lineNumbers: true,
             lineWrapping: true,
             theme: 'default',
@@ -59,6 +59,7 @@ onMounted(async () => {
     }
 })
 
+// logic to get code and run it in python 
 const runCode = async () => {
     try {
         const code = editorInstance.value.getValue()
@@ -79,15 +80,6 @@ sys.stderr = mystderr = StringIO()
     } catch (err) {
         output.value = '❌ Error: ' + err.toString()
     }
-}
-
-const submit = () => {
-    const code = editorInstance.value.getValue()
-    if (!code.trim()) {
-        alert('⚠️ Please write your code before submitting.')
-        return
-    }
-    emit('submitCode', code)
 }
 </script>
 

@@ -4,6 +4,7 @@ import UserCode from "@/components/UserCode.vue";
 import { auth } from "@/firebase";
 import Admin from "@/components/Admin.vue";
 
+// all routes for intercommunication between components
 const routes = [
   { path: "/", component: Home },
   {
@@ -19,7 +20,7 @@ const router = createRouter({
   routes,
 });
 
-// 🔒 Auth Guard
+// Auth Guard to not dirrectly access the Code Panel without login
 router.beforeEach((to, from, next) => {
   const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
   const isAuthenticated = auth.currentUser;

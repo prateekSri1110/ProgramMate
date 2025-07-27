@@ -3,6 +3,7 @@ import AdminLogin from './adminLogin.vue'
 import UserLogin from './userLogin.vue'
 </script>
 
+<!-- Home page with login as User and login as Admin functionalities -->
 <template>
     <div class="container p-5">
         <!-- Header -->

@@ -1,4 +1,5 @@
 <template>
+    <!-- User login -->
     <div class="text-center mt-5">
         <h4>USER</h4>
         <button class="btn btn-primary" @click="loginWithGoogle">Login with Google</button>
@@ -13,6 +14,7 @@ import { useRouter } from 'vue-router';
 
 const router = useRouter();
 
+// login with google
 const loginWithGoogle = async () => {
     try {
         const result = await signInWithPopup(auth, provider);

@@ -1,8 +1,10 @@
 <template>
     <div class="p-2">
+        <!-- home button to go back to home page -->
         <router-link to="/" class="btn btn-light">@ HOME</router-link>
 
         <div class="container mt-3">
+            <!-- admin panel (all admin details and add/remove feature) -->
             <span>ADMIN</span>
             <br />
             <h3 class="text-uppercase">{{ currentAdmin.name }}</h3>
@@ -24,6 +26,7 @@
                         <td>{{ ad.name }}</td>
                         <td>{{ ad.email }}</td>
                         <td>
+                            <!-- delete admin -->
                             <b @click="deleteAdmin(ad.id)" style="cursor: pointer; color: red;">X</b>
                         </td>
                     </tr>
@@ -32,6 +35,7 @@
 
             <hr />
 
+            <!-- add new admin -->
             <form @submit.prevent="addAdmin" class="row g-2 text-center mt-4">
                 <h4>ADD NEW ADMIN</h4>
                 <div class="col-md-3">
@@ -49,6 +53,7 @@
             </form>
         </div>
         <hr>
+        <!-- user submitted program solutions -->
         <div class="container mt-3">
             <h3>User Submissions :</h3>
             <div class="container p-3 border mt-1" v-for="(code, index) in codes" :key="code.id">
@@ -57,6 +62,8 @@
                 <span><strong>email : </strong>{{ code.email }}</span>
                 <p><strong>Problem :</strong> {{ code.questionTitle }}</p>
                 <p><strong> Code :</strong> {{ code.code }}</p>
+
+                <!-- button to delete user submission (only accessible to admins) -->
                 <button class="btn btn-danger text-white" @click="deleteSubmission(code.id)"
                     style="cursor: pointer; color: red;">
                     DELETE SUBMISSION
@@ -85,7 +92,7 @@ const adminId = route.params.id;
 
 const currentAdmin = ref({});
 const admin = ref([]);
-const codes = ref([]); // ✅ Add ref for submissions
+const codes = ref([]); // Add ref for submissions
 
 // Fetch the current admin info
 const fetchCurrentAdmin = async () => {

@@ -19,7 +19,7 @@
                 </div>
             </div>
 
-            <!-- Code Editor Side -->
+            <!-- CodeEditor Side -->
             <div class="col-6 bg-light p-4">
                 <h3>Write Your Code</h3>
                 <CodeEditor v-model:code="code" />
@@ -43,6 +43,7 @@ const user = ref(null)
 const code = ref('')
 const randomProgram = ref(null)
 
+// List of all programs (static data)
 const programs = ref([
     {
         id: 1,
@@ -82,6 +83,7 @@ const programs = ref([
     }
 ])
 
+// random function to generate random program by index
 function getRandom() {
     const index = Math.floor(Math.random() * programs.value.length)
     randomProgram.value = programs.value[index]
@@ -101,6 +103,7 @@ onMounted(() => {
     })
 })
 
+// submit code with the current user's details to collections
 async function submitCode() {
     const question = randomProgram.value
     const codeContent = code.value
