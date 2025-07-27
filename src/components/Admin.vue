@@ -48,6 +48,21 @@
                 </div>
             </form>
         </div>
+        <hr>
+        <div class="container mt-3">
+            <h3>User Submissions :</h3>
+            <div class="container p-3 border mt-1" v-for="(code, index) in codes" :key="code.id">
+                <h5>Submission {{ index + 1 }}</h5>
+                <h5><strong>username :</strong> {{ code.name }}</h5>
+                <span><strong>email : </strong>{{ code.email }}</span>
+                <p><strong>Problem :</strong> {{ code.questionTitle }}</p>
+                <p><strong> Code :</strong> {{ code.code }}</p>
+                <button class="btn btn-danger text-white" @click="deleteSubmission(code.id)"
+                    style="cursor: pointer; color: red;">
+                    DELETE SUBMISSION
+                </button>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -62,6 +77,7 @@ import {
     addDoc,
     getDocs,
     getDoc,
+    serverTimestamp
 } from 'firebase/firestore';
 
 const route = useRoute();
@@ -69,7 +85,9 @@ const adminId = route.params.id;
 
 const currentAdmin = ref({});
 const admin = ref([]);
+const codes = ref([]); // ✅ Add ref for submissions
 
+// Fetch the current admin info
 const fetchCurrentAdmin = async () => {
     try {
         const docRef = doc(db, 'admins', adminId);
@@ -84,6 +102,7 @@ const fetchCurrentAdmin = async () => {
     }
 };
 
+// Fetch the list of all admins
 const fetchAdminList = async () => {
     try {
         const querySnapshot = await getDocs(collection(db, 'admins'));
@@ -96,6 +115,7 @@ const fetchAdminList = async () => {
     }
 };
 
+// Add new admin to the collection
 const newAdmin = ref({
     name: '',
     email: '',
@@ -104,7 +124,6 @@ const newAdmin = ref({
 
 const addAdmin = async () => {
     const { name, email, password } = newAdmin.value;
-
     if (!name.trim() || !email.trim() || !password.trim()) {
         alert('❗ Please fill all fields');
         return;
@@ -114,7 +133,7 @@ const addAdmin = async () => {
         await addDoc(collection(db, 'admins'), {
             name: name.trim(),
             email: email.trim(),
-            password: password.trim(), // ⚠️ Insecure – Consider hashing or Firebase Auth
+            password: password.trim(),
         });
         newAdmin.value = { name: '', email: '', password: '' };
         await fetchAdminList();
@@ -123,6 +142,7 @@ const addAdmin = async () => {
     }
 };
 
+// Delete admin by ID
 const deleteAdmin = async (id) => {
     if (!confirm('🗑️ Are you sure you want to delete this admin?')) return;
 
@@ -135,9 +155,47 @@ const deleteAdmin = async (id) => {
     }
 };
 
+// Fetch user submissions
+const getSubmissions = async () => {
+    try {
+        const queryCode = await getDocs(collection(db, 'submissions'));
+        codes.value = queryCode.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+        }));
+    } catch (e) {
+        console.error('❌ Error fetching submissions:', e);
+    }
+};
+
+// Delete a submission by ID
+const deleteSubmission = async (id) => {
+    if (!confirm('❌ Delete this submission?')) return;
+
+    try {
+        await deleteDoc(doc(db, 'submissions', id));
+        alert('✅ Submission deleted!');
+        await getSubmissions(); // refresh list
+    } catch (e) {
+        console.error('❌ Error deleting submission:', e);
+    }
+
+    const deleteSubmission = async (id) => {
+        if (!confirm('❌ Delete this submission?')) return;
+        try {
+            await deleteDoc(doc(db, 'submissions', id));
+            alert('✅ Submission deleted!');
+            await getSubmissions();
+        } catch (e) {
+            console.error('❌ Error deleting submission:', e);
+        }
+    }
+};
+
 onMounted(() => {
     fetchCurrentAdmin();
     fetchAdminList();
+    getSubmissions();
 });
 </script>
 
@@ -148,5 +206,9 @@ span {
 
 h4 {
     letter-spacing: 5px;
+}
+
+.btn {
+    font-size: 0.8rem;
 }
 </style>

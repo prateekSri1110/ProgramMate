@@ -1,7 +1,7 @@
 <template>
     <span v-if="!isAuthenticated">You are not authenticated.</span>
-
     <div v-else class="container-fluid code">
+        <router-link to="/" class="btn btn-light">@ HOME</router-link>
         <div class="row">
             <!-- Question Side -->
             <div class="col-6 p-5">
@@ -22,7 +22,8 @@
             <!-- Code Editor Side -->
             <div class="col-6 bg-light p-4">
                 <h3>Write Your Code</h3>
-                <CodeEditor />
+                <CodeEditor v-model:code="code" />
+                <button class="btn btn-primary m-3" @click="submitCode">Submit</button>
             </div>
         </div>
     </div>
@@ -31,17 +32,16 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { onAuthStateChanged } from 'firebase/auth'
-import { auth } from '../firebase'
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
+import { auth, db } from '../firebase'
 import CodeEditor from './codeEditor.vue'
 import '../allCss.css'
 
 const isAuthenticated = ref(false)
+const user = ref(null)
 
-onMounted(() => {
-    onAuthStateChanged(auth, (user) => {
-        isAuthenticated.value = !!user
-    })
-})
+const code = ref('')
+const randomProgram = ref(null)
 
 const programs = ref([
     {
@@ -82,11 +82,55 @@ const programs = ref([
     }
 ])
 
-const randomProgram = ref(null)
-
 function getRandom() {
     const index = Math.floor(Math.random() * programs.value.length)
     randomProgram.value = programs.value[index]
+}
+
+onMounted(() => {
+    onAuthStateChanged(auth, (currentUser) => {
+        if (currentUser) {
+            isAuthenticated.value = true
+            user.value = {
+                name: currentUser.displayName || 'Anonymous',
+                email: currentUser.email
+            }
+        } else {
+            isAuthenticated.value = false
+        }
+    })
+})
+
+async function submitCode() {
+    const question = randomProgram.value
+    const codeContent = code.value
+
+    if (!question || !codeContent || codeContent.trim() === '') {
+        alert('⚠️ Please select a question and write your code before submitting.')
+        return
+    }
+
+    try {
+        await addDoc(collection(db, 'submissions'), {
+            name: user.value.name,
+            email: user.value.email,
+            questionId: question.id,
+            questionTitle: question.title,
+            questionText: question.problem,
+            code: codeContent,
+            timestamp: serverTimestamp()
+        })
+
+        alert('✅ Submission saved to Firestore!')
+        console.log("Submitted:", {
+            user: user.value,
+            question: randomProgram.value,
+            code: code.value
+        })
+
+    } catch (error) {
+        alert('❌ Error saving submission: ' + error.message)
+    }
 }
 </script>
 

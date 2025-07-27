@@ -2,19 +2,18 @@
     <div class="container">
         <div v-if="!isEditorReady" class="text-muted mb-3">⏳ Loading editor and Pyodide...</div>
 
-        <div ref="editorRef" class="editor-container"></div>
+        <div ref="editorRef" class="editor-container mb-3"></div>
 
         <div class="mt-3">
             <button class="btn btn-dark m-2" @click="runCode">Run Code</button>
-            <button class="btn btn-primary m-2" type="submit">Submit</button>
         </div>
 
-        <pre class="output">{{ output }}</pre>
+        <pre class="output bg-light p-3 rounded border">{{ output }}</pre>
     </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, defineEmits } from 'vue'
 import CodeMirror from 'codemirror'
 import 'codemirror/lib/codemirror.css'
 import 'codemirror/mode/python/python.js'
@@ -25,14 +24,15 @@ const pyodide = ref(null)
 const output = ref('')
 const isEditorReady = ref(false)
 
+const emit = defineEmits(['submitCode', 'update:code'])
+
 async function loadPyodideScript() {
     if (!window.loadPyodide) {
         await import('https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js')
     }
-
-    const pyodide = await loadPyodide({
-        indexURL: "https://cdn.jsdelivr.net/pyodide/v0.25.1/full/"
-    });
+    return await window.loadPyodide({
+        indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.25.1/full/',
+    })
 }
 
 onMounted(async () => {
@@ -45,11 +45,15 @@ onMounted(async () => {
             mode: 'python',
             lineNumbers: true,
             lineWrapping: true,
-            theme: 'default'
+            theme: 'default',
         })
 
-        editorInstance.value.focus()
+        editorInstance.value.on('change', () => {
+            emit('update:code', editorInstance.value.getValue())
+        })
+
         isEditorReady.value = true
+        editorInstance.value.focus()
     } catch (e) {
         output.value = '❌ Failed to load Pyodide: ' + e.toString()
     }
@@ -58,39 +62,45 @@ onMounted(async () => {
 const runCode = async () => {
     try {
         const code = editorInstance.value.getValue()
-        const result = await pyodide.value.runPythonAsync(code)
-        output.value = result ?? '✅ Code executed with no output.'
+
+        await pyodide.value.runPythonAsync(`
+import sys
+from io import StringIO
+sys.stdout = mystdout = StringIO()
+sys.stderr = mystderr = StringIO()
+    `)
+
+        await pyodide.value.runPythonAsync(code)
+
+        const stdout = await pyodide.value.runPythonAsync('mystdout.getvalue()')
+        const stderr = await pyodide.value.runPythonAsync('mystderr.getvalue()')
+
+        output.value = stderr || stdout || '✅ Code ran with no output.'
     } catch (err) {
         output.value = '❌ Error: ' + err.toString()
     }
 }
+
+const submit = () => {
+    const code = editorInstance.value.getValue()
+    if (!code.trim()) {
+        alert('⚠️ Please write your code before submitting.')
+        return
+    }
+    emit('submitCode', code)
+}
 </script>
 
 <style scoped>
-.container {
-    padding: 2rem;
-    max-width: 800px;
-    margin: auto;
-}
-
 .editor-container {
     border: 1px solid #ccc;
-    min-height: 400px;
-    margin-bottom: 1rem;
-}
-
-.CodeMirror {
-    height: auto;
-    font-size: 16px;
+    border-radius: 5px;
+    min-height: 300px;
 }
 
 .output {
-    margin-top: 1rem;
-    background: #f1f1f1;
-    padding: 1rem;
-    color: #000;
-    font-family: monospace;
     white-space: pre-wrap;
-    border-radius: 4px;
+    font-family: monospace;
+    font-size: 1rem;
 }
 </style>
